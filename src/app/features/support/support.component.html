@@ -1,0 +1,152 @@
+<section class="page-header">
+  <div>
+    <p class="eyebrow">{{ 'support.eyebrow' | translate }}</p>
+    <h1>{{ 'support.title' | translate }}</h1>
+    <p class="lead">{{ 'support.lead' | translate }}</p>
+  </div>
+  <div class="open-pill" [class.open-pill--ok]="openCount() === 0">
+    <mat-icon>{{ openCount() === 0 ? 'task_alt' : 'pending_actions' }}</mat-icon>
+    <div>
+      <strong>{{ openCount() }}</strong>
+      <small>{{ openCount() === 0 ? ('support.inboxOk' | translate) : ('support.open' | translate) }}</small>
+    </div>
+  </div>
+</section>
+
+<section class="status-strip">
+  <article>
+    <span class="status-dot pending"></span>
+    <div>
+      <small>{{ 'support.pending' | translate }}</small>
+      <strong>{{ pendingCount() }}</strong>
+    </div>
+  </article>
+  <article>
+    <span class="status-dot progress"></span>
+    <div>
+      <small>{{ 'support.inProgress' | translate }}</small>
+      <strong>{{ inProgressCount() }}</strong>
+    </div>
+  </article>
+  <article>
+    <span class="status-dot resolved"></span>
+    <div>
+      <small>{{ 'support.resolved' | translate }}</small>
+      <strong>{{ resolvedCount() }}</strong>
+    </div>
+  </article>
+</section>
+
+<section class="layout">
+  <article class="panel composer">
+    <header class="panel__head">
+      <div>
+        <p class="eyebrow">{{ 'support.newRequest' | translate }}</p>
+        <h2>{{ 'support.registerBlocker' | translate }}</h2>
+        <small class="form-help">{{ 'support.requestHelp' | translate }}</small>
+      </div>
+      <span class="panel__icon"><mat-icon>edit_note</mat-icon></span>
+    </header>
+
+    <form [formGroup]="form" (ngSubmit)="sendMessage()">
+      <mat-form-field appearance="outline">
+        <mat-label>{{ 'support.ticketDetail' | translate }}</mat-label>
+        <textarea matInput rows="9" maxlength="500" formControlName="content"
+          [placeholder]="'support.ticketPlaceholder' | translate"></textarea>
+        <mat-hint align="end">{{ 'support.maxChars' | translate }}</mat-hint>
+        <mat-error *ngIf="form.controls.content.invalid">{{ 'support.minChars' | translate }}</mat-error>
+      </mat-form-field>
+
+      <button mat-flat-button color="primary" type="submit" [disabled]="saving()">
+        <mat-icon>send</mat-icon>
+        {{ saving() ? ('support.sending' | translate) : ('support.createTicket' | translate) }}
+      </button>
+    </form>
+  </article>
+
+  <article class="panel queue">
+    <header class="panel__head">
+      <div>
+        <p class="eyebrow">{{ 'support.queue' | translate }}</p>
+        <h2>{{ 'support.companyTickets' | translate }}</h2>
+        <small class="form-help">{{ 'support.queueHelp' | translate }}</small>
+      </div>
+    </header>
+
+    <div class="queue-tools">
+      <mat-form-field appearance="outline">
+        <mat-label>{{ 'support.searchTicket' | translate }}</mat-label>
+        <input matInput
+          [value]="ticketSearch()"
+          (input)="ticketSearch.set($any($event.target).value)"
+          [placeholder]="'support.searchPlaceholder' | translate">
+        <mat-icon matSuffix>search</mat-icon>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="filter-field">
+        <mat-label>{{ 'support.view' | translate }}</mat-label>
+        <mat-select [value]="filter()" (valueChange)="filter.set($any($event))">
+          <mat-option *ngFor="let option of filters" [value]="option">
+            {{ statusLabel(option) }}
+          </mat-option>
+        </mat-select>
+      </mat-form-field>
+    </div>
+
+    <div class="empty" *ngIf="filteredMessages().length === 0">
+      <mat-icon>inbox</mat-icon>
+      <strong>{{ 'support.emptyTitle' | translate }}</strong>
+      <p>{{ 'support.emptyText' | translate }}</p>
+    </div>
+
+    <div class="ticket-list" *ngIf="filteredMessages().length > 0">
+      <article class="ticket" *ngFor="let message of filteredMessages()">
+        <div class="ticket-side"
+          [class.pending]="message.status === 'PENDING'"
+          [class.progress]="message.status === 'IN_PROGRESS'"
+          [class.resolved]="message.status === 'RESOLVED'"></div>
+
+        <div class="ticket-main">
+          <div class="ticket-meta">
+            <span class="status"
+              [class.pending]="message.status === 'PENDING'"
+              [class.progress]="message.status === 'IN_PROGRESS'"
+              [class.resolved]="message.status === 'RESOLVED'">
+              <mat-icon>{{ statusIcon(message.status) }}</mat-icon>
+              {{ statusLabel(message.status) }}
+            </span>
+            <small><mat-icon>schedule</mat-icon> {{ message.receivedAt | date:'medium' }}</small>
+          </div>
+          <p>{{ message.content }}</p>
+        </div>
+
+        <div class="ticket-actions">
+          <div class="state-actions" [attr.aria-label]="'support.changeStatus' | translate">
+            <button mat-button
+              type="button"
+              *ngFor="let option of statuses"
+              class="state-button"
+              [class.active]="message.status === option"
+              (click)="changeStatus(message, option)"
+              [disabled]="isUpdating(message)">
+              <mat-icon>{{ statusIcon(option) }}</mat-icon>
+              {{ statusLabel(option) }}
+            </button>
+          </div>
+
+          <button mat-flat-button color="primary"
+            type="button"
+            (click)="changeStatus(message, nextStatus(message))"
+            [disabled]="isUpdating(message)">
+            <mat-icon>{{ nextActionIcon(message) }}</mat-icon>
+            {{ isUpdating(message) ? ('support.updating' | translate) : nextActionLabel(message) }}
+          </button>
+
+          <button mat-icon-button type="button" aria-label="Eliminar" class="danger" (click)="remove(message)">
+            <mat-icon>delete</mat-icon>
+          </button>
+        </div>
+      </article>
+    </div>
+  </article>
+</section>

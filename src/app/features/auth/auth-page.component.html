@@ -1,0 +1,158 @@
+<main class="auth-screen">
+  <div class="auth-controls">
+    <div class="language-switch" role="group" [attr.aria-label]="'shell.language' | translate"
+         [attr.data-active]="i18n.language()">
+      <button type="button" [class.active]="i18n.language() === 'es'" (click)="i18n.use('es')">ES</button>
+      <button type="button" [class.active]="i18n.language() === 'en'" (click)="i18n.use('en')">EN</button>
+    </div>
+
+    <button mat-icon-button type="button" class="theme-button"
+            [class.theme-button--dark]="theme.theme() === 'dark'"
+            (click)="toggleTheme()"
+            [attr.aria-label]="'shell.theme' | translate">
+      <mat-icon>{{ theme.theme() === 'dark' ? 'light_mode' : 'dark_mode' }}</mat-icon>
+    </button>
+  </div>
+
+  <section class="brand-panel">
+    <div class="brand-panel__overlay" aria-hidden="true"></div>
+
+    <header class="brand-mark">
+      <img src="assets/talentmanagerlogoblanco.png" alt="TalentManager">
+      <span>TalentManager</span>
+    </header>
+
+    <div class="brand-copy">
+      <h1>{{ 'auth.title' | translate }}</h1>
+      <p class="lead">{{ 'auth.lead' | translate }}</p>
+    </div>
+
+    <aside class="demo-card">
+      <span class="demo-card__tag">{{ 'auth.demo' | translate }}</span>
+      <div class="demo-card__row">
+        <small>Email</small>
+        <strong>demo&#64;talentmanager.local</strong>
+      </div>
+      <div class="demo-card__row">
+        <small>{{ 'auth.password' | translate }}</small>
+        <code>Talent1234</code>
+      </div>
+    </aside>
+  </section>
+
+  <section class="form-panel">
+    <div class="form-shell">
+      <div class="mode-switch" [attr.data-mode]="mode()">
+        <span class="mode-switch__indicator" aria-hidden="true"></span>
+        <a routerLink="/login" routerLinkActive="active">{{ 'auth.loginTab' | translate }}</a>
+        <a routerLink="/register" routerLinkActive="active">{{ 'auth.registerTab' | translate }}</a>
+      </div>
+
+      <ng-container *ngIf="mode() === 'login'; else registerTpl">
+        <header class="form-head">
+          <h2>{{ 'auth.loginTitle' | translate }}</h2>
+          <p>{{ 'auth.loginLead' | translate }}</p>
+        </header>
+
+        <form [formGroup]="loginForm" (ngSubmit)="submitLogin()" class="auth-form">
+          <mat-form-field appearance="outline">
+            <mat-label>{{ 'auth.username' | translate }}</mat-label>
+            <input matInput formControlName="username" autocomplete="username">
+            <mat-icon matSuffix>alternate_email</mat-icon>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>{{ 'auth.passwordField' | translate }}</mat-label>
+            <input matInput
+                   [type]="showPassword() ? 'text' : 'password'"
+                   formControlName="password"
+                   autocomplete="current-password">
+            <button mat-icon-button matSuffix type="button"
+                    class="visibility-toggle"
+                    (click)="togglePassword()"
+                    [attr.aria-label]="(showPassword() ? 'profile.hidePassword' : 'profile.showPassword') | translate">
+              <mat-icon>{{ showPassword() ? 'visibility_off' : 'visibility' }}</mat-icon>
+            </button>
+          </mat-form-field>
+
+          <p class="error" *ngIf="error()">
+            <mat-icon>error_outline</mat-icon>
+            <span>{{ error() }}</span>
+          </p>
+
+          <button mat-flat-button color="primary" type="submit" [disabled]="loading()">
+            <ng-container *ngIf="!loading()"><mat-icon>login</mat-icon> {{ 'auth.loginButton' | translate }}</ng-container>
+            <ng-container *ngIf="loading()">{{ 'auth.loggingIn' | translate }}</ng-container>
+          </button>
+        </form>
+
+        <p class="swap">{{ 'auth.noAccount' | translate }} <a routerLink="/register">{{ 'auth.registerCompany' | translate }}</a></p>
+      </ng-container>
+
+      <ng-template #registerTpl>
+        <header class="form-head">
+          <h2>{{ 'auth.registerTitle' | translate }}</h2>
+          <p>{{ 'auth.registerLead' | translate }}</p>
+        </header>
+
+        <form [formGroup]="registerForm" (ngSubmit)="submitRegister()" class="auth-form register-grid">
+          <mat-form-field appearance="outline">
+            <mat-label>{{ 'auth.accessEmail' | translate }}</mat-label>
+            <input matInput formControlName="username" autocomplete="username">
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>{{ 'auth.passwordField' | translate }}</mat-label>
+            <input matInput
+                   [type]="showPassword() ? 'text' : 'password'"
+                   formControlName="password"
+                   autocomplete="new-password">
+            <button mat-icon-button matSuffix type="button"
+                    class="visibility-toggle"
+                    (click)="togglePassword()"
+                    [attr.aria-label]="(showPassword() ? 'profile.hidePassword' : 'profile.showPassword') | translate">
+              <mat-icon>{{ showPassword() ? 'visibility_off' : 'visibility' }}</mat-icon>
+            </button>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>{{ 'auth.firstName' | translate }}</mat-label>
+            <input matInput formControlName="firstname">
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>{{ 'auth.lastName' | translate }}</mat-label>
+            <input matInput formControlName="lastname">
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>{{ 'auth.company' | translate }}</mat-label>
+            <input matInput formControlName="companyName">
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>{{ 'auth.companyEmail' | translate }}</mat-label>
+            <input matInput formControlName="companyEmail">
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="span-2">
+            <mat-label>{{ 'auth.companyDescription' | translate }}</mat-label>
+            <textarea matInput rows="3" formControlName="companyDescription"></textarea>
+          </mat-form-field>
+
+          <p class="error span-2" *ngIf="error()">
+            <mat-icon>error_outline</mat-icon>
+            <span>{{ error() }}</span>
+          </p>
+
+          <button mat-flat-button color="primary" type="submit" class="span-2" [disabled]="loading()">
+            <ng-container *ngIf="!loading()"><mat-icon>rocket_launch</mat-icon> {{ 'auth.createWorkspace' | translate }}</ng-container>
+            <ng-container *ngIf="loading()">{{ 'auth.creating' | translate }}</ng-container>
+          </button>
+        </form>
+
+        <p class="swap">{{ 'auth.hasAccount' | translate }} <a routerLink="/login">{{ 'auth.loginLink' | translate }}</a></p>
+      </ng-template>
+    </div>
+  </section>
+</main>

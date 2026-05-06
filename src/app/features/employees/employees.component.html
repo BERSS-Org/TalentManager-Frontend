@@ -1,0 +1,183 @@
+<section class="page-header">
+  <div>
+    <p class="eyebrow">{{ 'employees.eyebrow' | translate }}</p>
+    <h1>{{ 'employees.title' | translate }}</h1>
+    <p class="lead">{{ 'employees.lead' | translate }}</p>
+  </div>
+  <div class="header-stats">
+    <div class="stat-pill">
+      <mat-icon>groups</mat-icon>
+      <div>
+        <strong>{{ employees().length }}</strong>
+        <small>{{ 'employees.people' | translate }}</small>
+      </div>
+    </div>
+    <div class="stat-pill stat-pill--accent">
+      <mat-icon>workspaces</mat-icon>
+      <div>
+        <strong>{{ teams().length }}</strong>
+        <small>{{ 'employees.teams' | translate }}</small>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="layout">
+  <article class="panel form-panel">
+    <header class="panel__head">
+      <div>
+        <p class="eyebrow">{{ editing() ? ('employees.edit' | translate) : ('employees.quickCreate' | translate) }}</p>
+        <h2>{{ editing() ? ('employees.updateEmployee' | translate) : ('employees.newEmployee' | translate) }}</h2>
+        <small class="form-help">
+          {{ editing() ? ('employees.editHelp' | translate) : ('employees.createHelp' | translate) }}
+        </small>
+      </div>
+      <span class="form-icon" [class.form-icon--editing]="editing()">
+        <mat-icon>{{ editing() ? 'edit_note' : 'person_add' }}</mat-icon>
+      </span>
+    </header>
+
+    <form [formGroup]="form" (ngSubmit)="save()">
+      <mat-form-field appearance="outline">
+        <mat-label>{{ 'employees.firstName' | translate }}</mat-label>
+        <input matInput formControlName="firstName">
+        <mat-error *ngIf="form.controls.firstName.invalid">{{ 'employees.minTwo' | translate }}</mat-error>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>{{ 'employees.lastName' | translate }}</mat-label>
+        <input matInput formControlName="lastName">
+        <mat-error *ngIf="form.controls.lastName.invalid">{{ 'employees.minTwo' | translate }}</mat-error>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="span-2">
+        <mat-label>{{ 'employees.role' | translate }}</mat-label>
+        <input matInput formControlName="occupation" [placeholder]="'employees.rolePlaceholder' | translate">
+        <mat-error *ngIf="form.controls.occupation.invalid">{{ 'employees.roleRequired' | translate }}</mat-error>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>{{ 'employees.startDate' | translate }}</mat-label>
+        <input matInput type="date" formControlName="registrationDate">
+        <mat-error *ngIf="form.controls.registrationDate.invalid">{{ 'employees.selectDate' | translate }}</mat-error>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>{{ 'employees.team' | translate }}</mat-label>
+        <input matInput formControlName="teamName" placeholder="TI, QA, HR...">
+        <mat-error *ngIf="form.controls.teamName.invalid">{{ 'employees.minTwo' | translate }}</mat-error>
+      </mat-form-field>
+
+      <p class="error-message span-2" *ngIf="error()">
+        <mat-icon>error_outline</mat-icon>
+        <span>{{ error() }}</span>
+      </p>
+
+      <div class="actions span-2">
+        <button mat-flat-button color="primary" type="submit" [disabled]="saving()">
+          <mat-icon>{{ editing() ? 'save' : 'add' }}</mat-icon>
+          {{ saving() ? ('employees.saving' | translate) : (editing() ? ('employees.saveChanges' | translate) : ('employees.addEmployee' | translate)) }}
+        </button>
+        <button mat-button type="button" (click)="resetForm()">
+          <mat-icon>close</mat-icon>
+          {{ 'employees.cancel' | translate }}
+        </button>
+      </div>
+    </form>
+  </article>
+
+  <article class="panel table-panel">
+    <header class="panel__head">
+      <div>
+        <p class="eyebrow">{{ 'employees.activeTeam' | translate }}</p>
+        <h2>{{ 'employees.registeredPeople' | translate:{ count: employees().length } }}</h2>
+        <small class="form-help" *ngIf="employees().length > 0">
+          {{ 'employees.filteredPeople' | translate:{ count: filteredEmployees().length } }}
+        </small>
+      </div>
+      <div class="team-tags" *ngIf="teams().length > 0">
+        <span class="tag" *ngFor="let team of teams()">{{ team }}</span>
+      </div>
+    </header>
+
+    <div class="directory-tools" *ngIf="employees().length > 0">
+      <mat-form-field appearance="outline">
+        <mat-label>{{ 'employees.searchEmployee' | translate }}</mat-label>
+        <input matInput
+          [value]="search()"
+          (input)="search.set($any($event.target).value)"
+          [placeholder]="'employees.searchPlaceholder' | translate">
+        <mat-icon matSuffix>search</mat-icon>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>{{ 'employees.filterTeam' | translate }}</mat-label>
+        <mat-select [value]="teamFilter()" (valueChange)="teamFilter.set($any($event))">
+          <mat-option value="ALL">{{ 'employees.allTeams' | translate }}</mat-option>
+          <mat-option *ngFor="let team of teams()" [value]="team">{{ team }}</mat-option>
+        </mat-select>
+      </mat-form-field>
+
+      <button mat-button type="button" class="clear-filters" *ngIf="search() || teamFilter() !== 'ALL'"
+        (click)="search.set(''); teamFilter.set('ALL')">
+        <mat-icon>filter_alt_off</mat-icon>
+        {{ 'employees.clearFilters' | translate }}
+      </button>
+    </div>
+
+    <div class="empty" *ngIf="employees().length === 0">
+      <mat-icon>person_add</mat-icon>
+      <strong>{{ 'employees.emptyTitle' | translate }}</strong>
+      <p>{{ 'employees.emptyText' | translate }}</p>
+    </div>
+
+    <div class="empty" *ngIf="employees().length > 0 && filteredEmployees().length === 0">
+      <mat-icon>person_search</mat-icon>
+      <strong>{{ 'employees.noMatchesTitle' | translate }}</strong>
+      <p>{{ 'employees.noMatchesText' | translate }}</p>
+    </div>
+
+    <div class="table-wrap" *ngIf="filteredEmployees().length > 0">
+      <table>
+        <thead>
+        <tr>
+          <th>{{ 'employees.person' | translate }}</th>
+          <th>{{ 'employees.role' | translate }}</th>
+          <th>{{ 'employees.team' | translate }}</th>
+          <th>{{ 'employees.startDate' | translate }}</th>
+          <th [attr.aria-label]="'employees.actions' | translate"></th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr *ngFor="let employee of filteredEmployees()">
+          <td>
+            <div class="person">
+              <span class="avatar">{{ employee.firstName[0] }}{{ employee.lastName[0] }}</span>
+              <div>
+                <strong>{{ fullName(employee) }}</strong>
+                <small>ID #{{ employee.id }}</small>
+              </div>
+            </div>
+          </td>
+          <td>{{ employee.occupation }}</td>
+          <td><span class="tag">{{ employee.teamName }}</span></td>
+          <td class="muted">
+            <span class="cell-date">
+              <mat-icon>event</mat-icon>
+              {{ employee.registrationDate | date:'mediumDate' }}
+            </span>
+          </td>
+          <td class="row-actions">
+            <button mat-icon-button type="button" [attr.aria-label]="'employees.editAction' | translate" (click)="edit(employee)">
+              <mat-icon>edit</mat-icon>
+            </button>
+            <button mat-icon-button type="button" [attr.aria-label]="'employees.deleteAction' | translate" class="danger" (click)="remove(employee)">
+              <mat-icon>delete</mat-icon>
+            </button>
+          </td>
+        </tr>
+        </tbody>
+      </table>
+    </div>
+  </article>
+</section>

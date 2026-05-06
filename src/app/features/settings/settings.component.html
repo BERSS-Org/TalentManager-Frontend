@@ -1,0 +1,175 @@
+<section class="page-header">
+  <div>
+    <p class="eyebrow">{{ 'settings.eyebrow' | translate }}</p>
+    <h1>{{ 'settings.title' | translate }}</h1>
+    <p class="lead">{{ 'settings.lead' | translate }}</p>
+  </div>
+  <div class="target-pill" *ngIf="settings() as s">
+    <mat-icon>flag</mat-icon>
+    <div>
+      <strong>{{ monthlyTarget() }} h</strong>
+      <small>{{ 'settings.monthlyTarget' | translate }}</small>
+    </div>
+  </div>
+</section>
+
+<section class="settings-grid">
+  <article class="panel">
+    <header class="panel__head">
+      <div>
+        <p class="eyebrow">{{ 'settings.operationsTitle' | translate }}</p>
+        <h2>{{ 'settings.operationsTitle' | translate }}</h2>
+        <small class="form-help">{{ 'settings.operationsHelp' | translate }}</small>
+      </div>
+      <span class="panel__icon"><mat-icon>schedule</mat-icon></span>
+    </header>
+
+    <form [formGroup]="companyForm" (ngSubmit)="saveCompany()" class="form-grid">
+      <mat-form-field appearance="outline">
+        <mat-label>{{ 'settings.expectedDailyHours' | translate }}</mat-label>
+        <input matInput type="number" min="1" max="24" step="0.5" formControlName="expectedDailyHours">
+        <mat-hint>{{ 'settings.expectedDailyHoursHint' | translate }}</mat-hint>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>{{ 'settings.workingDaysPerMonth' | translate }}</mat-label>
+        <input matInput type="number" min="1" max="31" formControlName="workingDaysPerMonth">
+        <mat-hint>{{ 'settings.workingDaysPerMonthHint' | translate }}</mat-hint>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="span-2 currency-field">
+        <mat-label>{{ 'settings.currency' | translate }}</mat-label>
+        <mat-select formControlName="currencyCode" panelClass="currency-panel" (closed)="currencySearch.set('')">
+          <mat-select-trigger>
+            <span class="currency-trigger">
+              <span class="currency-trigger__code">{{ companyForm.controls.currencyCode.value || 'USD' }}</span>
+              <span class="currency-trigger__name">{{ currencyDisplay(companyForm.controls.currencyCode.value || 'USD') }}</span>
+            </span>
+          </mat-select-trigger>
+
+          <div class="currency-search" (click)="$event.stopPropagation()" (keydown)="$event.stopPropagation()">
+            <mat-icon>search</mat-icon>
+            <input type="text" autocomplete="off"
+                   [value]="currencySearch()"
+                   (input)="currencySearch.set($any($event.target).value)"
+                   [placeholder]="'settings.currencySearch' | translate">
+          </div>
+
+          <mat-option *ngFor="let option of filteredCurrencies()" [value]="option.code">
+            <span class="currency-option">
+              <span class="currency-option__code">{{ option.code }}</span>
+              <span class="currency-option__name">{{ currencyName(option) }}</span>
+              <span class="currency-option__symbol">{{ option.symbol }}</span>
+            </span>
+          </mat-option>
+
+          <mat-option disabled *ngIf="filteredCurrencies().length === 0">
+            <em class="currency-option__empty">—</em>
+          </mat-option>
+        </mat-select>
+        <mat-hint>{{ 'settings.currencyHint' | translate }}</mat-hint>
+      </mat-form-field>
+
+      <div class="target-card span-2">
+        <mat-icon>flag</mat-icon>
+        <div>
+          <small>{{ 'settings.monthlyTargetHint' | translate }}</small>
+          <strong>{{ monthlyTarget() }} h</strong>
+        </div>
+      </div>
+
+      <div class="section-divider span-2">
+        <span>{{ 'settings.compensationTitle' | translate }}</span>
+      </div>
+
+      <p class="section-help span-2">{{ 'settings.compensationHelp' | translate }}</p>
+
+      <mat-form-field appearance="outline">
+        <mat-label>{{ 'settings.defaultHourlyRate' | translate }}</mat-label>
+        <input matInput type="number" min="0" step="0.5" formControlName="defaultHourlyRate">
+        <span matTextSuffix class="currency-suffix">{{ persistedCurrency() }}</span>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>{{ 'settings.defaultHourlyCost' | translate }}</mat-label>
+        <input matInput type="number" min="0" step="0.5" formControlName="defaultHourlyCost">
+        <span matTextSuffix class="currency-suffix">{{ persistedCurrency() }}</span>
+      </mat-form-field>
+
+      <div class="margin-card span-2" [class.margin-card--zero]="defaultMargin() === 0">
+        <mat-icon>trending_up</mat-icon>
+        <div>
+          <small>{{ 'settings.marginPreview' | translate }}</small>
+          <strong>{{ defaultMargin() | currency:persistedCurrency():'symbol':'1.2-2' }} <em>/ h</em></strong>
+        </div>
+      </div>
+
+      <button mat-flat-button color="primary" type="submit" class="span-2" [disabled]="savingCompany()">
+        <mat-icon>save</mat-icon>
+        {{ savingCompany() ? ('settings.saving' | translate) : ('settings.saveSettings' | translate) }}
+      </button>
+    </form>
+  </article>
+
+  <article class="panel roster-panel">
+    <header class="panel__head">
+      <div>
+        <p class="eyebrow">{{ 'settings.rosterTitle' | translate }}</p>
+        <h2>{{ 'settings.rosterTitle' | translate }}</h2>
+        <small class="form-help">{{ 'settings.rosterHelp' | translate }}</small>
+      </div>
+      <span class="panel__icon panel__icon--accent"><mat-icon>payments</mat-icon></span>
+    </header>
+
+    <div class="empty" *ngIf="employees().length === 0 && !loading()">
+      <mat-icon>person_add</mat-icon>
+      <p>{{ 'settings.rosterEmpty' | translate }}</p>
+    </div>
+
+    <div class="roster" *ngIf="employees().length > 0">
+      <article class="roster-row" *ngFor="let employee of employees(); let i = index" [style.--stagger]="i">
+        <div class="roster-row__person">
+          <span class="avatar" [attr.data-pos]="i % 4">{{ initials(employee) }}</span>
+          <div>
+            <strong>{{ fullName(employee) }}</strong>
+            <small>{{ employee.occupation }} · {{ employee.teamName }}</small>
+          </div>
+        </div>
+
+        <form class="roster-row__form" [formGroup]="formFor(employee)" (ngSubmit)="saveRosterRow(employee)">
+          <mat-form-field appearance="outline">
+            <mat-label>{{ 'employees.hourlyRate' | translate }}</mat-label>
+            <input matInput type="number" min="0" step="0.5" formControlName="hourlyRate">
+            <span matTextSuffix class="currency-suffix">{{ persistedCurrency() }}</span>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>{{ 'employees.hourlyCost' | translate }}</mat-label>
+            <input matInput type="number" min="0" step="0.5" formControlName="hourlyCost">
+            <span matTextSuffix class="currency-suffix">{{ persistedCurrency() }}</span>
+          </mat-form-field>
+
+          <div class="roster-row__metrics">
+            <div class="metric">
+              <small>{{ 'employees.monthlyRate' | translate }}</small>
+              <strong>{{ monthlyRate(employee) | currency:persistedCurrency():'symbol':'1.0-0' }}</strong>
+            </div>
+            <div class="metric metric--cost">
+              <small>{{ 'employees.monthlyCost' | translate }}</small>
+              <strong>{{ monthlyCost(employee) | currency:persistedCurrency():'symbol':'1.0-0' }}</strong>
+            </div>
+            <div class="metric metric--margin">
+              <small>{{ 'settings.marginPreview' | translate }}</small>
+              <strong>{{ marginFor(formFor(employee)) | currency:persistedCurrency():'symbol':'1.2-2' }} <em>/ h</em></strong>
+            </div>
+          </div>
+
+          <button mat-flat-button color="primary" type="submit" [disabled]="savingRoster() === employee.id">
+            <mat-icon>save</mat-icon>
+            {{ savingRoster() === employee.id ? ('settings.saving' | translate) : ('settings.saveSettings' | translate) }}
+          </button>
+        </form>
+      </article>
+    </div>
+  </article>
+</section>

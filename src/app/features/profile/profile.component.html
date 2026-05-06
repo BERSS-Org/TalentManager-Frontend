@@ -1,0 +1,106 @@
+<section class="page-header">
+  <div>
+    <p class="eyebrow">{{ 'profile.eyebrow' | translate }}</p>
+    <h1>{{ 'profile.title' | translate }}</h1>
+    <p class="lead">{{ 'profile.lead' | translate }}</p>
+  </div>
+</section>
+
+<section class="profile-grid" *ngIf="!loading() && profile() as data">
+  <article class="panel identity-panel">
+    <header class="panel__head">
+      <div>
+        <p class="eyebrow">{{ 'profile.accountTitle' | translate }}</p>
+        <h2>{{ 'profile.accountTitle' | translate }}</h2>
+      </div>
+      <span class="panel__icon"><mat-icon>person</mat-icon></span>
+    </header>
+
+    <div class="identity-card">
+      <div class="identity-card__avatar">{{ initials() }}</div>
+      <div class="identity-card__main">
+        <strong>{{ data.username }}</strong>
+        <small>{{ data.companyName }}</small>
+      </div>
+    </div>
+
+    <dl class="identity-list">
+      <div class="identity-row">
+        <dt>{{ 'profile.username' | translate }}</dt>
+        <dd>{{ data.username }}</dd>
+      </div>
+      <div class="identity-row">
+        <dt>{{ 'profile.company' | translate }}</dt>
+        <dd>{{ data.companyName || '—' }}</dd>
+      </div>
+      <div class="identity-row">
+        <dt>{{ 'profile.memberSince' | translate }}</dt>
+        <dd>{{ data.memberSince | date:'mediumDate' }}</dd>
+      </div>
+    </dl>
+  </article>
+
+  <article class="panel password-panel">
+    <header class="panel__head">
+      <div>
+        <p class="eyebrow">{{ 'profile.passwordTitle' | translate }}</p>
+        <h2>{{ 'profile.passwordTitle' | translate }}</h2>
+        <small class="form-help">{{ 'profile.passwordHelp' | translate }}</small>
+      </div>
+      <span class="panel__icon panel__icon--accent"><mat-icon>lock</mat-icon></span>
+    </header>
+
+    <form [formGroup]="form" (ngSubmit)="submit()">
+      <mat-form-field appearance="outline">
+        <mat-label>{{ 'profile.currentPassword' | translate }}</mat-label>
+        <input matInput
+               [type]="showCurrent() ? 'text' : 'password'"
+               formControlName="currentPassword"
+               autocomplete="current-password">
+        <button mat-icon-button matSuffix type="button"
+                class="visibility-toggle"
+                (click)="toggleCurrent()"
+                [matTooltip]="(showCurrent() ? 'profile.hidePassword' : 'profile.showPassword') | translate">
+          <mat-icon>{{ showCurrent() ? 'visibility_off' : 'visibility' }}</mat-icon>
+        </button>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>{{ 'profile.newPassword' | translate }}</mat-label>
+        <input matInput
+               [type]="showNew() ? 'text' : 'password'"
+               formControlName="newPassword"
+               autocomplete="new-password">
+        <button mat-icon-button matSuffix type="button"
+                class="visibility-toggle"
+                (click)="toggleNew()"
+                [matTooltip]="(showNew() ? 'profile.hidePassword' : 'profile.showPassword') | translate">
+          <mat-icon>{{ showNew() ? 'visibility_off' : 'visibility' }}</mat-icon>
+        </button>
+        <mat-hint>{{ 'profile.newPasswordHint' | translate }}</mat-hint>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>{{ 'profile.confirmPassword' | translate }}</mat-label>
+        <input matInput
+               [type]="showConfirm() ? 'text' : 'password'"
+               formControlName="confirmPassword"
+               autocomplete="new-password">
+        <button mat-icon-button matSuffix type="button"
+                class="visibility-toggle"
+                (click)="toggleConfirm()"
+                [matTooltip]="(showConfirm() ? 'profile.hidePassword' : 'profile.showPassword') | translate">
+          <mat-icon>{{ showConfirm() ? 'visibility_off' : 'visibility' }}</mat-icon>
+        </button>
+        <mat-error *ngIf="form.hasError('mismatch') && form.controls.confirmPassword.touched">
+          {{ 'profile.passwordMismatch' | translate }}
+        </mat-error>
+      </mat-form-field>
+
+      <button mat-flat-button color="primary" type="submit" [disabled]="saving()">
+        <mat-icon>save</mat-icon>
+        {{ saving() ? ('profile.saving' | translate) : ('profile.savePassword' | translate) }}
+      </button>
+    </form>
+  </article>
+</section>

@@ -1,19 +1,31 @@
 import { Routes } from '@angular/router';
-import { SupportComponent } from './Employees/pages/Support/components/support.component';
-import { ReportsComponent } from './Employees/pages/Reports/components/reports.component';
-import { HomeComponent } from './Employees/pages/Home/components/home.component';
-import { LoginPage } from './Employees/pages/Login/components/login-page.component/login-page.component';
-import { DashboardMain } from './Employees/pages/Dashboard/components/dashboard-main.component/dashboard-main.component';
-import { StatisticsComponent } from './Employees/pages/Register/statistics/statistics.component';
-import { RegisterPage } from './Employees/pages/Register/register-page/register-page.component';
+import { authGuard } from './core/auth.guard';
+import { AuthPageComponent } from './features/auth/auth-page.component';
+import { DashboardComponent } from './features/dashboard/dashboard.component';
+import { EmployeesComponent } from './features/employees/employees.component';
+import { ProfileComponent } from './features/profile/profile.component';
+import { ReportsComponent } from './features/reports/reports.component';
+import { SettingsComponent } from './features/settings/settings.component';
+import { ShellComponent } from './features/shell/shell.component';
+import { SupportComponent } from './features/support/support.component';
 
 export const routes: Routes = [
-  { path: '', redirectTo: 'login', pathMatch: 'full' },
-  { path: 'home', component: HomeComponent },
-  { path: 'reports', component: ReportsComponent },
-  { path: 'dashboards', component: DashboardMain },
-  { path: 'dashboards/details', component: StatisticsComponent },
-  { path: 'support', component: SupportComponent },
-  { path: 'login', component: LoginPage },
-  { path: 'register', component: RegisterPage }
+  { path: '', redirectTo: 'app/dashboard', pathMatch: 'full' },
+  { path: 'login', component: AuthPageComponent, data: { mode: 'login' } },
+  { path: 'register', component: AuthPageComponent, data: { mode: 'register' } },
+  {
+    path: 'app',
+    component: ShellComponent,
+    canActivate: [authGuard],
+    children: [
+      { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
+      { path: 'dashboard', component: DashboardComponent },
+      { path: 'employees', component: EmployeesComponent },
+      { path: 'reports', component: ReportsComponent },
+      { path: 'support', component: SupportComponent },
+      { path: 'settings', component: SettingsComponent },
+      { path: 'profile', component: ProfileComponent }
+    ]
+  },
+  { path: '**', redirectTo: 'app/dashboard' }
 ];

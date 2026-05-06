@@ -1,0 +1,240 @@
+<section class="page-hero">
+  <div class="page-hero__copy">
+    <p class="eyebrow">{{ 'dashboard.eyebrow' | translate }}</p>
+    <h1>{{ 'dashboard.title' | translate }}</h1>
+    <p class="lead">{{ 'dashboard.lead' | translate }}</p>
+  </div>
+
+  <div class="page-hero__status" *ngIf="overview() as data">
+    <span class="page-hero__status-tag">{{ 'dashboard.health' | translate }}</span>
+    <strong>{{ data.healthLabel }}</strong>
+    <small *ngIf="data.openSupportMessages">{{ 'dashboard.ticketsOpen' | translate:{ count: data.openSupportMessages } }}</small>
+    <small *ngIf="!data.openSupportMessages">{{ 'dashboard.noSupport' | translate }}</small>
+  </div>
+</section>
+
+<mat-progress-bar *ngIf="loading()" mode="indeterminate"></mat-progress-bar>
+
+<ng-container *ngIf="overview() as data">
+  <section class="kpi-grid">
+    <article class="kpi-card kpi-card--brand">
+      <div class="kpi-card__icon"><mat-icon>groups</mat-icon></div>
+      <span class="kpi-card__label">{{ 'dashboard.employees' | translate }}</span>
+      <strong class="kpi-card__value">{{ data.totalEmployees }}</strong>
+      <small class="kpi-card__hint">{{ 'dashboard.employeesHint' | translate:{ count: data.totalTeams } }}</small>
+    </article>
+
+    <article class="kpi-card">
+      <div class="kpi-card__icon kpi-card__icon--accent"><mat-icon>payments</mat-icon></div>
+      <span class="kpi-card__label">{{ 'dashboard.input' | translate }}</span>
+      <strong class="kpi-card__value">{{ data.totalInput | currency:currency():'symbol':'1.0-0' }}</strong>
+      <small class="kpi-card__hint">{{ 'dashboard.inputHint' | translate }}</small>
+    </article>
+
+    <article class="kpi-card">
+      <div class="kpi-card__icon kpi-card__icon--info"><mat-icon>military_tech</mat-icon></div>
+      <span class="kpi-card__label">{{ 'dashboard.score' | translate }}</span>
+      <strong class="kpi-card__value">{{ data.averageScore | number:'1.1-1' }}<small>/10</small></strong>
+      <small class="kpi-card__hint">{{ 'dashboard.scoreHint' | translate }}</small>
+    </article>
+
+    <article class="kpi-card">
+      <div class="kpi-card__icon kpi-card__icon--success"><mat-icon>schedule</mat-icon></div>
+      <span class="kpi-card__label">{{ 'dashboard.completion' | translate }}</span>
+      <strong class="kpi-card__value">{{ data.completionRate | number:'1.0-0' }}<small>%</small></strong>
+      <div class="kpi-card__bar">
+        <mat-progress-bar mode="determinate" [value]="data.completionRate"></mat-progress-bar>
+      </div>
+      <small class="kpi-card__hint">{{ 'dashboard.completionHint' | translate:{ done: data.completedHours, total: data.totalHours } }}</small>
+    </article>
+  </section>
+
+  <section class="trend-panel panel">
+    <header class="panel__head">
+      <div>
+        <p class="eyebrow">{{ 'dashboard.trend' | translate }}</p>
+        <h2>{{ 'dashboard.trendTitle' | translate }}</h2>
+        <small class="form-help">{{ 'dashboard.trendHelp' | translate }}</small>
+      </div>
+      <div class="trend-legend">
+        <span><i class="dot dot--brand"></i> {{ 'dashboard.incomeLegend' | translate }}</span>
+        <span><i class="dot dot--accent"></i> {{ 'dashboard.hoursLegend' | translate }}</span>
+      </div>
+    </header>
+
+    <div class="trend-layout" *ngIf="trendHasData(); else noTrendData">
+      <div class="chart-frame">
+        <canvas baseChart
+                [type]="'line'"
+                [data]="trendChartData()"
+                [options]="trendChartOptions()"></canvas>
+      </div>
+
+      <aside class="trend-reading">
+        <p class="eyebrow">{{ 'dashboard.howToRead' | translate }}</p>
+        <h3>{{ 'dashboard.readTitle' | translate }}</h3>
+        <p>{{ 'dashboard.readText' | translate }}</p>
+        <div class="trend-reading__metric" *ngIf="latestTrendPoint() as latest">
+          <span>{{ latest.label }}</span>
+          <strong>{{ latest.totalInput | currency:currency():'symbol':'1.0-0' }}</strong>
+          <small>{{ latest.totalHours | number:'1.0-0' }} h</small>
+        </div>
+        <div class="trend-reading__note">
+          <mat-icon>tips_and_updates</mat-icon>
+          <span>{{ trendInsight() }}</span>
+        </div>
+      </aside>
+    </div>
+
+    <ng-template #noTrendData>
+      <div class="empty empty--wide">
+        <mat-icon>show_chart</mat-icon>
+        <strong>{{ 'dashboard.trendEmptyTitle' | translate }}</strong>
+        <p>{{ 'dashboard.trendEmptyText' | translate }}</p>
+      </div>
+    </ng-template>
+  </section>
+
+  <section class="contributors-panel panel">
+    <header class="panel__head">
+      <div>
+        <p class="eyebrow">{{ 'dashboard.contributors' | translate }}</p>
+        <h2>{{ 'dashboard.contributorsTitle' | translate }}</h2>
+        <small class="form-help">{{ 'dashboard.contributorsHelp' | translate }}</small>
+      </div>
+      <div class="contrib-totals" *ngIf="contributorsHasData()">
+        <span class="metric-chip">
+          <small>{{ 'dashboard.totalRevenue' | translate }}</small>
+          <strong>{{ totalRevenue() | currency:currency():'symbol':'1.0-0' }}</strong>
+        </span>
+        <span class="metric-chip metric-chip--cost">
+          <small>{{ 'dashboard.totalCost' | translate }}</small>
+          <strong>{{ totalCost() | currency:currency():'symbol':'1.0-0' }}</strong>
+        </span>
+        <span class="metric-chip metric-chip--margin">
+          <small>{{ 'dashboard.totalMargin' | translate }} · {{ globalMarginRate() | number:'1.0-0' }}%</small>
+          <strong>{{ totalMargin() | currency:currency():'symbol':'1.0-0' }}</strong>
+        </span>
+      </div>
+    </header>
+
+    <div class="contrib-layout" *ngIf="contributorsHasData(); else noContributors">
+      <div class="chart-frame">
+        <canvas baseChart
+                [type]="'bar'"
+                [data]="contributorsChartData()"
+                [options]="contributorsChartOptions()"></canvas>
+      </div>
+
+      <div class="contrib-leaderboard">
+        <p class="contrib-leaderboard__head">
+          {{ 'dashboard.marginRateExplanation' | translate }}
+        </p>
+        <ul>
+          <li *ngFor="let contributor of topContributors(); let i = index">
+            <span class="contrib-rank">{{ i + 1 }}</span>
+            <div class="contrib-name">
+              <strong>{{ contributor.employeeName }}</strong>
+              <small>{{ contributor.teamName }} · {{ contributor.hoursWorked | number:'1.0-0' }} h</small>
+            </div>
+            <span class="contrib-margin"
+                  [matTooltip]="'dashboard.marginTooltip' | translate:{ rate: (contributor.marginRate | number:'1.0-1'), revenue: (contributor.totalInput | currency:currency():'symbol':'1.0-0'), margin: (contributor.margin | currency:currency():'symbol':'1.0-0') }"
+                  [class.contrib-margin--low]="contributor.marginRate < 20"
+                  [class.contrib-margin--mid]="contributor.marginRate >= 20 && contributor.marginRate < 40"
+                  [class.contrib-margin--high]="contributor.marginRate >= 40">
+              <small>{{ 'dashboard.marginRateChip' | translate }}</small>
+              <strong>{{ contributor.marginRate | number:'1.0-0' }}%</strong>
+            </span>
+          </li>
+        </ul>
+      </div>
+    </div>
+
+    <ng-template #noContributors>
+      <div class="empty empty--wide">
+        <mat-icon>payments</mat-icon>
+        <strong>{{ 'dashboard.contributorsEmptyTitle' | translate }}</strong>
+        <p>{{ 'dashboard.contributorsEmptyText' | translate }}</p>
+        <a class="empty__cta" routerLink="/app/settings">
+          <mat-icon>tune</mat-icon>
+          {{ 'dashboard.goSettings' | translate }}
+        </a>
+      </div>
+    </ng-template>
+  </section>
+
+  <section class="content-grid">
+    <article class="panel teams-panel">
+      <header class="panel__head">
+        <div>
+          <p class="eyebrow">{{ 'dashboard.teams' | translate }}</p>
+          <h2>{{ 'dashboard.teamPerformance' | translate }}</h2>
+          <small class="form-help">
+            {{ 'dashboard.targetExplained' | translate:{ hours: cumplimientoTarget() } }}
+          </small>
+        </div>
+        <span class="leader-pill" *ngIf="topTeam() as leader">
+          <mat-icon>emoji_events</mat-icon>
+          {{ 'dashboard.leader' | translate:{ team: leader.teamName } }}
+        </span>
+      </header>
+
+      <div class="empty" *ngIf="teams().length === 0">
+        <mat-icon>groups</mat-icon>
+        <strong>{{ 'dashboard.teamsEmptyTitle' | translate }}</strong>
+        <p>{{ 'dashboard.teamsEmptyText' | translate }}</p>
+      </div>
+
+      <div class="team-list" *ngIf="teams().length > 0">
+        <div class="team-row" *ngFor="let team of teams(); let i = index">
+          <div class="team-rank">{{ i + 1 }}</div>
+          <div class="team-main">
+            <strong>{{ team.teamName }}</strong>
+            <span>{{ team.employeeCount }} {{ 'employees.people' | translate }}</span>
+          </div>
+          <div class="team-meter">
+            <div class="team-meter__head">
+              <small>{{ 'dashboard.completion' | translate }}</small>
+              <strong>{{ team.completionRate | number:'1.0-0' }}%</strong>
+            </div>
+            <mat-progress-bar mode="determinate" [value]="team.completionRate"></mat-progress-bar>
+          </div>
+          <div class="team-score">
+            <strong>{{ team.totalInput | currency:currency():'symbol':'1.0-0' }}</strong>
+            <span>Score {{ team.averageScore | number:'1.1-1' }}/10</span>
+          </div>
+        </div>
+      </div>
+    </article>
+
+    <article class="panel insight-panel">
+      <header class="panel__head">
+        <div>
+          <p class="eyebrow">{{ 'dashboard.businessReading' | translate }}</p>
+          <h2>{{ 'dashboard.suggestedPriorities' | translate }}</h2>
+        </div>
+        <span class="insight-icon"><mat-icon>tips_and_updates</mat-icon></span>
+      </header>
+
+      <ul *ngIf="data.insights.length">
+        <li *ngFor="let insight of data.insights">
+          <mat-icon>arrow_circle_right</mat-icon>
+          <span>{{ insight }}</span>
+        </li>
+      </ul>
+
+      <div class="empty" *ngIf="!data.insights.length">
+        <strong>{{ 'dashboard.insightsEmptyTitle' | translate }}</strong>
+        <p>{{ 'dashboard.insightsEmptyText' | translate }}</p>
+      </div>
+
+      <div class="support-note" *ngIf="data.openSupportMessages">
+        <mat-icon>support_agent</mat-icon>
+        <div>
+          <strong>{{ 'dashboard.supportOpenTitle' | translate:{ count: data.openSupportMessages } }}</strong>
+          <small>{{ 'dashboard.supportOpenText' | translate }}</small>
+        </div>
+      </div>
+    </article>
+  </section>
+</ng-container>
