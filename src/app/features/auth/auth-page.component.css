@@ -1,0 +1,508 @@
+:host {
+  display: block;
+  min-height: 100vh;
+  background: var(--surface-app);
+  color: var(--ink-800);
+}
+
+.auth-screen {
+  position: relative;
+  display: grid;
+  min-height: 100vh;
+  grid-template-columns: minmax(420px, 1.05fr) minmax(440px, 0.95fr);
+}
+
+/* ---------------------- Floating controls ---------------------- */
+.auth-controls {
+  position: fixed;
+  top: 16px;
+  right: 20px;
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* Animated language pill */
+.language-switch {
+  position: relative;
+  display: inline-grid;
+  grid-template-columns: repeat(2, 46px);
+  align-items: center;
+  padding: 4px;
+  border: 1px solid rgba(255, 255, 255, 0.55);
+  border-radius: var(--radius-pill);
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  box-shadow: var(--shadow-sm);
+  overflow: hidden;
+  isolation: isolate;
+  transition: box-shadow 240ms var(--ease-out);
+}
+
+.language-switch:hover {
+  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.16);
+}
+
+.language-switch::before {
+  content: '';
+  position: absolute;
+  top: 4px;
+  left: 4px;
+  width: 46px;
+  height: 32px;
+  border-radius: var(--radius-pill);
+  background: var(--grad-brand);
+  box-shadow: 0 4px 12px rgba(24, 77, 71, 0.32);
+  transition: transform 360ms var(--ease-spring);
+  z-index: 0;
+}
+
+.language-switch[data-active='en']::before {
+  transform: translateX(46px);
+}
+
+.language-switch button {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  height: 32px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-pill);
+  background: transparent;
+  color: var(--ink-500);
+  cursor: pointer;
+  font-family: var(--font-heading);
+  font-size: 0.78rem;
+  font-weight: 800;
+  transition: color 280ms var(--ease-out), transform 280ms var(--ease-out);
+}
+
+.language-switch button.active {
+  color: #fff;
+  transform: scale(1.04);
+}
+
+/* Theme button — animated icon morph + glow */
+.theme-button {
+  position: relative;
+  display: grid !important;
+  place-items: center !important;
+  width: 46px !important;
+  height: 46px !important;
+  padding: 0 !important;
+  border: 1px solid rgba(255, 255, 255, 0.55) !important;
+  border-radius: 50% !important;
+  background: rgba(255, 255, 255, 0.92) !important;
+  color: var(--ink-800) !important;
+  box-shadow: var(--shadow-sm) !important;
+  overflow: visible !important;
+  transition: background 280ms var(--ease-out), border-color 280ms var(--ease-out), box-shadow 280ms var(--ease-out) !important;
+}
+
+.theme-button::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: radial-gradient(circle at 50% 50%, rgba(248, 196, 109, 0.45), transparent 65%);
+  opacity: 0;
+  transition: opacity 360ms var(--ease-out);
+  pointer-events: none;
+}
+
+.theme-button:hover {
+  border-color: var(--brand-300) !important;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18) !important;
+}
+
+.theme-button:hover::before {
+  opacity: 1;
+}
+
+.theme-button mat-icon {
+  position: relative;
+  z-index: 1;
+  width: 22px;
+  height: 22px;
+  margin: 0 !important;
+  font-size: 22px;
+  animation: themeIconMorph 540ms var(--ease-spring);
+}
+
+@keyframes themeIconMorph {
+  0%   { transform: rotate(-180deg) scale(0.3); opacity: 0; }
+  50%  { transform: rotate(20deg)   scale(1.15); opacity: 1; }
+  80%  { transform: rotate(-5deg)   scale(0.95); }
+  100% { transform: rotate(0)       scale(1);   opacity: 1; }
+}
+
+.theme-button--dark {
+  background: rgba(17, 26, 24, 0.86) !important;
+  border-color: rgba(255, 255, 255, 0.18) !important;
+  color: #ffd591 !important;
+}
+
+.theme-button--dark::before {
+  background: radial-gradient(circle at 50% 50%, rgba(143, 211, 202, 0.35), transparent 65%);
+}
+
+/* ---------------------- Brand panel (with photo bg) ---------------------- */
+.brand-panel {
+  position: relative;
+  display: grid;
+  align-content: space-between;
+  gap: 56px;
+  padding: 64px clamp(40px, 5vw, 80px);
+  overflow: hidden;
+  color: #f6fbf8;
+  isolation: isolate;
+  background-image: url('/assets/fondoLoginRegister.jpg');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+/* Dark overlay for legibility — anchors text on any image */
+.brand-panel__overlay {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background:
+    linear-gradient(135deg, rgba(8, 24, 22, 0.72) 0%, rgba(13, 44, 41, 0.52) 50%, rgba(11, 33, 30, 0.78) 100%),
+    radial-gradient(at 80% 0%, rgba(220, 138, 77, 0.15), transparent 55%);
+}
+
+.brand-panel::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background:
+    linear-gradient(180deg, rgba(0, 0, 0, 0) 60%, rgba(0, 0, 0, 0.32) 100%);
+  pointer-events: none;
+}
+
+.brand-mark {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-family: var(--font-heading);
+  font-size: 1.05rem;
+  font-weight: 700;
+  letter-spacing: -0.005em;
+  color: #fff;
+  animation: fadeIn 480ms var(--ease-out);
+}
+
+.brand-mark img {
+  width: 40px;
+  height: 40px;
+  object-fit: contain;
+  filter: drop-shadow(0 4px 14px rgba(0, 0, 0, 0.35));
+}
+
+.brand-copy {
+  max-width: 560px;
+  animation: fadeUp 580ms var(--ease-out);
+}
+
+.eyebrow--light {
+  color: rgba(247, 224, 200, 0.95);
+}
+
+.eyebrow--light::before {
+  background: var(--accent-500);
+}
+
+.brand-copy h1 {
+  margin: 0;
+  color: #fff;
+  font-size: clamp(2.4rem, 4.6vw, 3.8rem);
+  font-weight: 600;
+  line-height: 1.04;
+  letter-spacing: -0.025em;
+  text-shadow: 0 2px 24px rgba(0, 0, 0, 0.18);
+}
+
+.brand-copy .lead {
+  max-width: 520px;
+  margin: 22px 0 0;
+  color: rgba(240, 250, 246, 0.86);
+  font-size: 1.04rem;
+  line-height: 1.65;
+  font-weight: 400;
+}
+
+/* Demo card — minimalist, almost a quiet caption */
+.demo-card {
+  display: grid;
+  gap: 10px;
+  width: min(100%, 380px);
+  padding: 18px 20px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: var(--radius-md);
+  background: rgba(8, 22, 20, 0.45);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  animation: fadeUp 680ms var(--ease-out) 80ms both;
+}
+
+.demo-card__tag {
+  display: inline-flex;
+  align-self: flex-start;
+  align-items: center;
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: var(--accent-600);
+  color: #fff;
+  font-size: 0.66rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.demo-card__row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.demo-card__row small {
+  color: rgba(240, 250, 246, 0.6);
+  font-size: 0.74rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.demo-card__row strong {
+  color: #fff;
+  font-family: var(--font-mono);
+  font-size: 0.86rem;
+  font-weight: 500;
+}
+
+.demo-card__row code {
+  padding: 2px 9px;
+  border-radius: 5px;
+  background: rgba(255, 255, 255, 0.12);
+  color: #fff;
+  font-family: var(--font-mono);
+  font-size: 0.84rem;
+}
+
+/* ---------------------- Form panel — minimalist ---------------------- */
+.form-panel {
+  position: relative;
+  display: grid;
+  place-items: center;
+  padding: clamp(40px, 6vw, 96px) clamp(24px, 4vw, 80px);
+  background: var(--surface-app);
+}
+
+.form-shell {
+  position: relative;
+  width: min(100%, 460px);
+  animation: fadeUp 480ms var(--ease-out);
+}
+
+/* Quiet brand mark above the form to balance the layout */
+.form-mark {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 28px;
+  color: var(--ink-500);
+  font-family: var(--font-heading);
+  font-weight: 700;
+  font-size: 0.86rem;
+  letter-spacing: -0.005em;
+}
+
+.form-mark__dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--brand-600);
+  box-shadow: 0 0 0 3px var(--brand-50);
+}
+
+/* Tab switch with sliding pill */
+.mode-switch {
+  position: relative;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  padding: 4px;
+  margin-bottom: 32px;
+  border: 1px solid var(--line-soft);
+  border-radius: var(--radius-pill);
+  background: var(--surface-muted);
+  isolation: isolate;
+}
+
+.mode-switch__indicator {
+  position: absolute;
+  top: 4px;
+  bottom: 4px;
+  left: 4px;
+  width: calc(50% - 4px);
+  border-radius: var(--radius-pill);
+  background: var(--surface-card);
+  box-shadow: 0 2px 8px rgba(13, 31, 29, 0.08), 0 0 0 1px var(--line-soft);
+  transition: transform 360ms var(--ease-spring);
+  z-index: 0;
+}
+
+.mode-switch[data-mode='register'] .mode-switch__indicator {
+  transform: translateX(100%);
+}
+
+.mode-switch a {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  height: 40px;
+  border-radius: var(--radius-pill);
+  color: var(--ink-500);
+  font-size: 0.9rem;
+  font-weight: 700;
+  text-decoration: none;
+  transition: color 240ms var(--ease-out);
+}
+
+.mode-switch a:hover {
+  color: var(--ink-700);
+}
+
+.mode-switch a.active {
+  color: var(--brand-700);
+}
+
+.form-head h2 {
+  margin: 0 0 6px;
+  color: var(--ink-900);
+  font-size: 1.95rem;
+  font-weight: 700;
+  letter-spacing: -0.025em;
+}
+
+.form-head p {
+  margin: 0 0 28px;
+  color: var(--ink-500);
+  font-size: 0.96rem;
+}
+
+.auth-form {
+  display: grid;
+  gap: 14px;
+}
+
+.register-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.span-2 {
+  grid-column: span 2;
+}
+
+.auth-form button[mat-flat-button] {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 50px;
+  font-size: 0.98rem;
+  margin-top: 6px;
+}
+
+.auth-form mat-icon[matSuffix] {
+  color: var(--ink-300);
+}
+
+.swap {
+  margin: 24px 0 0;
+  color: var(--ink-500);
+  text-align: center;
+  font-size: 0.92rem;
+}
+
+.swap a {
+  color: var(--brand-500);
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.swap a:hover {
+  color: var(--brand-700);
+  text-decoration: underline;
+}
+
+.error {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0;
+  padding: 12px 14px;
+  border-radius: var(--radius-sm);
+  background: var(--danger-soft);
+  color: var(--danger);
+  font-size: 0.9rem;
+  font-weight: 600;
+  animation: fadeIn 240ms var(--ease-out);
+}
+
+.error mat-icon {
+  flex-shrink: 0;
+}
+
+@media (max-width: 980px) {
+  .auth-screen {
+    grid-template-columns: 1fr;
+  }
+
+  .brand-panel {
+    min-height: 320px;
+    padding: 56px 28px 60px;
+  }
+
+  .form-panel {
+    padding: 40px 20px 56px;
+  }
+}
+
+@media (max-width: 620px) {
+  .form-shell {
+    width: 100%;
+  }
+
+  .form-mark {
+    margin-bottom: 20px;
+  }
+
+  .mode-switch {
+    margin-bottom: 24px;
+  }
+
+  .register-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .span-2 {
+    grid-column: span 1;
+  }
+
+  .brand-copy h1 {
+    font-size: clamp(2rem, 7vw, 2.6rem);
+  }
+
+  .demo-card {
+    width: 100%;
+  }
+}

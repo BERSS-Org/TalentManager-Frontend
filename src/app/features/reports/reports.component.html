@@ -1,0 +1,340 @@
+<section class="page-header">
+  <div>
+    <p class="eyebrow">{{ 'reports.eyebrow' | translate }}</p>
+    <h1>{{ 'reports.title' | translate }}</h1>
+    <p class="lead">{{ 'reports.lead' | translate }}</p>
+  </div>
+  <div class="report-pill">
+    <mat-icon>summarize</mat-icon>
+    <div>
+      <strong>{{ reports().length }}</strong>
+      <small>{{ 'reports.savedReports' | translate }}</small>
+    </div>
+  </div>
+</section>
+
+<mat-progress-bar *ngIf="loading()" mode="indeterminate"></mat-progress-bar>
+
+<section class="signal-strip">
+  <article>
+    <span class="signal-icon"><mat-icon>today</mat-icon></span>
+    <div>
+      <small>{{ 'reports.dailyRecords' | translate }}</small>
+      <strong>{{ dailySummaries().length }}</strong>
+    </div>
+  </article>
+  <article>
+    <span class="signal-icon signal-icon--accent"><mat-icon>calendar_month</mat-icon></span>
+    <div>
+      <small>{{ 'reports.monthlyClosings' | translate }}</small>
+      <strong>{{ aggregates().length }}</strong>
+    </div>
+  </article>
+  <article>
+    <span class="signal-icon signal-icon--info"><mat-icon>description</mat-icon></span>
+    <div>
+      <small>{{ 'reports.savedReports' | translate }}</small>
+      <strong>{{ reports().length }}</strong>
+    </div>
+  </article>
+</section>
+
+<section class="flow-strip">
+  <article>
+    <span>1</span>
+    <div>
+      <strong>{{ 'reports.step1Title' | translate }}</strong>
+      <small>{{ 'reports.step1Text' | translate }}</small>
+    </div>
+  </article>
+  <article>
+    <span>2</span>
+    <div>
+      <strong>{{ 'reports.step2Title' | translate }}</strong>
+      <small>{{ 'reports.step2Text' | translate }}</small>
+    </div>
+  </article>
+  <article>
+    <span>3</span>
+    <div>
+      <strong>{{ 'reports.step3Title' | translate }}</strong>
+      <small>{{ 'reports.step3Text' | translate }}</small>
+    </div>
+  </article>
+</section>
+
+<section class="workbench">
+  <article class="panel setup-panel" *ngIf="employees().length === 0">
+    <header class="panel__head">
+      <div>
+        <p class="eyebrow">{{ 'reports.baseRequired' | translate }}</p>
+        <h2>{{ 'reports.needEmployee' | translate }}</h2>
+        <small class="form-help">{{ 'reports.needEmployeeText' | translate }}</small>
+      </div>
+      <a mat-flat-button color="primary" routerLink="/app/employees">
+        <mat-icon>groups</mat-icon>
+        {{ 'reports.goEmployees' | translate }}
+      </a>
+    </header>
+  </article>
+
+  <article class="panel daily-panel" *ngIf="employees().length > 0">
+    <header class="panel__head">
+      <div>
+        <p class="eyebrow">{{ 'reports.dailyLog' | translate }}</p>
+        <h2>{{ 'reports.dayRecord' | translate }}</h2>
+        <small class="form-help">{{ 'reports.dayHelp' | translate }}</small>
+      </div>
+      <span class="panel__icon"><mat-icon>edit_calendar</mat-icon></span>
+    </header>
+
+    <div class="employee-search employee-search--daily">
+      <mat-form-field appearance="outline">
+        <mat-label>{{ 'reports.searchDailyEmployee' | translate }}</mat-label>
+        <input matInput
+          [value]="dailyEmployeeSearch()"
+          (input)="dailyEmployeeSearch.set($any($event.target).value)"
+          [placeholder]="'reports.searchPlaceholder' | translate">
+        <mat-icon matSuffix>search</mat-icon>
+      </mat-form-field>
+
+      <div class="employee-results employee-results--compact">
+        <button class="employee-card"
+          type="button"
+          *ngFor="let employee of filteredDailyEmployees()"
+          [class.employee-card--active]="selectedDailyEmployee()?.id === employee.id"
+          (click)="selectDailyEmployee(employee)">
+          <span class="employee-card__avatar">{{ employeeInitials(employee) }}</span>
+          <span class="employee-card__body">
+            <strong>{{ employeeFullName(employee) }}</strong>
+            <small>{{ employee.occupation }} - {{ employee.teamName }}</small>
+          </span>
+        </button>
+      </div>
+    </div>
+
+    <form [formGroup]="dailyForm" (ngSubmit)="createDailySummary()" class="metric-form">
+      <div class="selected-person span-2" *ngIf="selectedDailyEmployee() as employee">
+        <mat-icon>badge</mat-icon>
+        <div>
+          <small>{{ 'reports.workdayFor' | translate }}</small>
+          <strong>{{ employeeFullName(employee) }} - {{ employee.teamName }}</strong>
+        </div>
+      </div>
+
+      <mat-form-field appearance="outline" class="span-2">
+        <mat-label>{{ 'reports.date' | translate }}</mat-label>
+        <input matInput [matDatepicker]="picker" formControlName="date">
+        <mat-datepicker-toggle matIconSuffix [for]="picker"></mat-datepicker-toggle>
+        <mat-datepicker #picker></mat-datepicker>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>{{ 'reports.entry' | translate }}</mat-label>
+        <input matInput type="time" formControlName="entryTime">
+        <mat-icon matSuffix>schedule</mat-icon>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>{{ 'reports.exit' | translate }}</mat-label>
+        <input matInput type="time" formControlName="exitTime">
+        <mat-icon matSuffix>schedule</mat-icon>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>{{ 'reports.income' | translate }}</mat-label>
+        <input matInput type="number" min="0" step="0.01" formControlName="inputAmount"
+               [placeholder]="incomePlaceholder()">
+        <span matTextSuffix class="currency-suffix">{{ currency() }}</span>
+        <mat-hint *ngIf="suggestedIncome() > 0">
+          Si lo dejas vacío se usará la tarifa: {{ suggestedIncome() | currency:currency():'symbol':'1.0-2' }}
+        </mat-hint>
+        <mat-hint *ngIf="suggestedIncome() === 0">
+          Configura la tarifa por hora del empleado en Ajustes para autocompletar.
+        </mat-hint>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>{{ 'reports.score' | translate }}</mat-label>
+        <input matInput type="number" formControlName="score">
+      </mat-form-field>
+
+      <div class="hours-preview span-2">
+        <mat-icon>timer</mat-icon>
+        <div>
+          <small>{{ 'reports.hoursPreview' | translate }}</small>
+          <strong>{{ hoursWorkedPreview() | number:'1.1-2' }} h</strong>
+        </div>
+      </div>
+
+      <p class="duplicate-note span-2" *ngIf="existingDailySummary() as existing">
+        <mat-icon>sync</mat-icon>
+        <span>
+          {{ 'reports.duplicatePrefix' | translate }}
+          ({{ formatTime(existing.entryTime) }} - {{ formatTime(existing.exitTime) }}).
+          {{ 'reports.duplicateSuffix' | translate }}
+        </span>
+      </p>
+
+      <button mat-flat-button color="primary" type="submit" class="span-2" [disabled]="employees().length === 0">
+        <mat-icon>{{ existingDailySummary() ? 'sync' : 'add_task' }}</mat-icon>
+        {{ existingDailySummary() ? ('reports.updateWorkday' | translate) : ('reports.saveRecord' | translate) }}
+      </button>
+    </form>
+
+    <div class="daily-list" *ngIf="latestDailySummaries().length > 0">
+      <p class="list-title">{{ 'reports.latestRecords' | translate }}</p>
+      <div class="daily-item" *ngFor="let summary of latestDailySummaries()">
+        <div class="daily-item__head">
+          <strong>{{ dailyDate(summary) }}</strong>
+          <span>{{ employeeName(summary.employeeId) }}</span>
+        </div>
+        <div class="daily-item__metrics">
+          <small><mat-icon>schedule</mat-icon> {{ formatTime(summary.entryTime) }} - {{ formatTime(summary.exitTime) }}</small>
+          <small><mat-icon>timer</mat-icon> {{ summary.hoursWorked | number:'1.1-2' }} h</small>
+          <small><mat-icon>payments</mat-icon> {{ summary.inputAmount | currency:currency():'symbol':'1.0-0' }}</small>
+          <small><mat-icon>military_tech</mat-icon> {{ summary.score }}/10</small>
+        </div>
+      </div>
+    </div>
+  </article>
+
+  <article class="panel composer" *ngIf="employees().length > 0">
+    <header class="panel__head">
+      <div>
+        <p class="eyebrow">{{ 'reports.executiveDecision' | translate }}</p>
+        <h2>{{ 'reports.createReport' | translate }}</h2>
+        <small class="form-help">{{ 'reports.createReportHelp' | translate }}</small>
+      </div>
+      <span class="panel__icon panel__icon--info"><mat-icon>auto_awesome</mat-icon></span>
+    </header>
+
+    <div class="employee-search">
+      <mat-form-field appearance="outline">
+        <mat-label>{{ 'reports.searchEmployee' | translate }}</mat-label>
+        <input matInput
+          [value]="reportEmployeeSearch()"
+          (input)="reportEmployeeSearch.set($any($event.target).value)"
+          [placeholder]="'reports.searchPlaceholder' | translate">
+        <mat-icon matSuffix>search</mat-icon>
+      </mat-form-field>
+
+      <div class="employee-results">
+        <button class="employee-card"
+          type="button"
+          *ngFor="let employee of filteredReportEmployees()"
+          [class.employee-card--active]="selectedEmployeeId() === employee.id"
+          (click)="selectEmployee(employee)">
+          <span class="employee-card__avatar">{{ employeeInitials(employee) }}</span>
+          <span class="employee-card__body">
+            <strong>{{ employeeFullName(employee) }}</strong>
+            <small>{{ employee.occupation }} - {{ employee.teamName }}</small>
+          </span>
+          <span class="employee-card__count">{{ aggregateCountForEmployee(employee.id) }}</span>
+        </button>
+      </div>
+
+      <p class="empty-note" *ngIf="filteredReportEmployees().length === 0">
+        <mat-icon>person_search</mat-icon>
+        <span>{{ 'reports.noEmployeeResults' | translate }}</span>
+      </p>
+    </div>
+
+    <form [formGroup]="reportForm" (ngSubmit)="createReport()">
+      <div class="selected-person" *ngIf="selectedEmployee() as employee">
+        <mat-icon>person</mat-icon>
+        <div>
+          <small>{{ 'reports.selectedEmployee' | translate }}</small>
+          <strong>{{ employeeFullName(employee) }} - {{ employee.teamName }}</strong>
+        </div>
+      </div>
+
+      <mat-form-field appearance="outline">
+        <mat-label>{{ 'reports.monthlyClosing' | translate }}</mat-label>
+        <mat-select formControlName="aggregateKey" [disabled]="selectedEmployeeAggregates().length === 0">
+          <mat-option *ngFor="let aggregate of selectedEmployeeAggregates()" [value]="aggregateKeyOf(aggregate)">
+            {{ monthName(aggregate.month) }} {{ aggregate.year }} - {{ aggregate.dayCount }} {{ 'reports.days' | translate }} -
+            {{ aggregate.completionRate | number:'1.0-0' }}% horas - score {{ aggregate.averageScore | number:'1.1-1' }}
+          </mat-option>
+        </mat-select>
+        <mat-hint>{{ 'reports.monthlyHint' | translate }}</mat-hint>
+      </mat-form-field>
+
+      <div class="summary-preview" *ngIf="selectedAggregate() as summary">
+        <div class="summary-preview__head">
+          <span>{{ summary.employeeName }} - {{ summary.teamName }}</span>
+          <strong>{{ monthName(summary.month) }} {{ summary.year }}</strong>
+        </div>
+        <div class="summary-preview__chips">
+          <small class="chip"><mat-icon>schedule</mat-icon> {{ summary.completionRate | number:'1.0-0' }}% horas</small>
+          <small class="chip"><mat-icon>timer</mat-icon> {{ summary.completedHours | number:'1.0-0' }}/{{ summary.totalHours }} h</small>
+          <small class="chip"><mat-icon>payments</mat-icon> {{ summary.totalInput | currency:currency():'symbol':'1.0-0' }}</small>
+          <small class="chip"><mat-icon>military_tech</mat-icon> {{ summary.averageScore | number:'1.1-1' }}/10</small>
+          <small class="chip"><mat-icon>event</mat-icon> {{ summary.dayCount }} {{ 'reports.days' | translate }}</small>
+        </div>
+      </div>
+
+      <p class="empty-note" *ngIf="selectedEmployee() && selectedEmployeeAggregates().length === 0">
+        <mat-icon>info</mat-icon>
+        <span>{{ 'reports.noWorkdays' | translate }}</span>
+      </p>
+
+      <mat-form-field appearance="outline">
+        <mat-label>{{ 'reports.decisionTitle' | translate }}</mat-label>
+        <input matInput formControlName="title" [placeholder]="'reports.autoTitlePlaceholder' | translate">
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>{{ 'reports.decisionContent' | translate }}</mat-label>
+        <textarea matInput rows="9" formControlName="content"
+          [placeholder]="'reports.decisionContent' | translate"></textarea>
+        <mat-hint>{{ 'reports.contentHint' | translate }}</mat-hint>
+      </mat-form-field>
+
+      <button mat-flat-button color="primary" type="submit" [disabled]="!selectedAggregate() || saving()">
+        <mat-icon>auto_awesome</mat-icon>
+        {{ saving() ? ('reports.saving' | translate) : ('reports.saveReport' | translate) }}
+      </button>
+    </form>
+  </article>
+</section>
+
+<section class="content-grid">
+  <article class="panel featured" *ngIf="selectedReport() as report">
+    <p class="eyebrow eyebrow--light">{{ 'reports.featured' | translate }}</p>
+    <h2>{{ report.title }}</h2>
+    <p>{{ report.content }}</p>
+    <div class="featured-meta">
+      <span><mat-icon>person</mat-icon> {{ employeeName(report.employeeId) }}</span>
+      <span><mat-icon>calendar_month</mat-icon> {{ monthName(report.month) }} {{ report.year }}</span>
+    </div>
+  </article>
+
+  <article class="panel list-panel">
+    <header class="panel__head">
+      <div>
+        <p class="eyebrow">{{ 'reports.history' | translate }}</p>
+        <h2>{{ 'reports.savedReports' | translate }}</h2>
+      </div>
+    </header>
+
+    <div class="empty" *ngIf="reports().length === 0">
+      <mat-icon>description</mat-icon>
+      <strong>{{ 'reports.noReports' | translate }}</strong>
+      <p>{{ 'reports.noReportsText' | translate }}</p>
+    </div>
+
+    <div class="report-list" *ngIf="reports().length > 0">
+      <div class="report-item" *ngFor="let report of reports()">
+        <div class="report-item__body">
+          <strong>{{ report.title }}</strong>
+          <p>{{ report.content }}</p>
+          <small><mat-icon>tag</mat-icon> {{ monthShort(report.month) }} {{ report.year }} - {{ employeeName(report.employeeId) }}</small>
+        </div>
+        <button mat-icon-button type="button" class="danger" [attr.aria-label]="'reports.deleteReport' | translate" (click)="deleteReport(report)">
+          <mat-icon>delete</mat-icon>
+        </button>
+      </div>
+    </div>
+  </article>
+</section>

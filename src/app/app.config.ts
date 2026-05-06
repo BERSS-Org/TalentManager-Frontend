@@ -1,32 +1,34 @@
 import { ApplicationConfig, provideZoneChangeDetection } from '@angular/core';
-import { provideTranslateService, TranslateLoader } from '@ngx-translate/core';
-import { HttpClient, provideHttpClient } from '@angular/common/http';
-import { TranslateHttpLoader } from '@ngx-translate/http-loader';
+import { HttpClient, provideHttpClient, withInterceptors } from '@angular/common/http';
+import { provideAnimationsAsync } from '@angular/platform-browser/animations/async';
 import { provideRouter } from '@angular/router';
+import { provideNativeDateAdapter, MAT_DATE_LOCALE } from '@angular/material/core';
+import { provideCharts, withDefaultRegisterables } from 'ng2-charts';
+import { TranslateLoader, provideTranslateService } from '@ngx-translate/core';
+import { TranslateHttpLoader } from '@ngx-translate/http-loader';
 import { routes } from './app.routes';
+import { authInterceptor } from './core/auth.interceptor';
 
-import { MatPaginatorIntl } from '@angular/material/paginator';
-import { createCustomPaginatorIntl } from '../../public/i18n/custom-paginator-intl';
-
-const httpLoaderFactory: (http: HttpClient) => TranslateLoader = (http: HttpClient) =>
-  new TranslateHttpLoader(http, './i18n/', '.json');
+function httpTranslateLoader(http: HttpClient) {
+  return new TranslateHttpLoader(http, '/i18n/', '.json');
+}
 
 export const appConfig: ApplicationConfig = {
   providers: [
     provideZoneChangeDetection({ eventCoalescing: true }),
-    provideHttpClient(),
+    provideHttpClient(withInterceptors([authInterceptor])),
     provideRouter(routes),
-    {
-      provide: MatPaginatorIntl,
-      useFactory: createCustomPaginatorIntl
-    },
+    provideAnimationsAsync(),
+    provideCharts(withDefaultRegisterables()),
     provideTranslateService({
+      defaultLanguage: 'es',
       loader: {
         provide: TranslateLoader,
-        useFactory: httpLoaderFactory,
+        useFactory: httpTranslateLoader,
         deps: [HttpClient]
-      },
-      defaultLanguage: 'en'
-    })
+      }
+    }),
+    provideNativeDateAdapter(),
+    { provide: MAT_DATE_LOCALE, useValue: 'es-ES' }
   ]
 };

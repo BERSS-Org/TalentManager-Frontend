@@ -1,0 +1,84 @@
+<div class="app-shell">
+  <aside class="sidebar">
+    <a class="brand" routerLink="/app/dashboard">
+      <span class="brand__mark">
+        <img
+          [src]="theme.theme() === 'dark' ? 'assets/talentmanagerlogoblanco.png' : 'assets/talentmanagerlogonegro.png'"
+          alt="TalentManager">
+      </span>
+      <span class="brand__text">
+        <strong>TalentManager</strong>
+        <small>{{ 'shell.brandTagline' | translate }}</small>
+      </span>
+    </a>
+
+    <div class="nav-group">
+      <p class="nav-group__title">{{ 'shell.operation' | translate }}</p>
+      <nav aria-label="Main navigation">
+        @for (item of navItems; track item.path; let i = $index) {
+          <a [routerLink]="item.path" routerLinkActive="active" class="nav-item" [style.--stagger]="i">
+            <span class="nav-item__indicator" aria-hidden="true"></span>
+            <span class="nav-item__icon">
+              <mat-icon>{{ item.icon }}</mat-icon>
+            </span>
+            <span class="nav-item__body">
+              <strong>{{ item.labelKey | translate }}</strong>
+              <small>{{ item.hintKey | translate }}</small>
+            </span>
+            <mat-icon class="nav-item__chev">chevron_right</mat-icon>
+          </a>
+        }
+      </nav>
+    </div>
+
+    <div class="sidebar-foot">
+      <button class="account" type="button"
+              [matTooltip]="'shell.openProfile' | translate"
+              (click)="openProfile()">
+        <div class="account__avatar">{{ initials() }}</div>
+        <div class="account__info">
+          <span>{{ 'shell.activeSession' | translate }}</span>
+          <strong>{{ displayName() }}</strong>
+        </div>
+        <mat-icon class="account__chev">chevron_right</mat-icon>
+      </button>
+      <button mat-button type="button" class="signout-button"
+              (click)="signOut()">
+        <mat-icon>logout</mat-icon>
+        <span>{{ 'shell.signOut' | translate }}</span>
+      </button>
+    </div>
+  </aside>
+
+  <main class="workspace">
+    <header class="topbar">
+      <div class="topbar__title" *ngIf="currentNav() as nav">
+        <p class="topbar__sub">{{ nav.hintKey | translate }}</p>
+        <h1>
+          <mat-icon class="topbar__title-icon">{{ nav.icon }}</mat-icon>
+          {{ nav.labelKey | translate }}
+        </h1>
+      </div>
+
+      <div class="topbar__actions">
+        <div class="language-switch" role="group" [attr.aria-label]="'shell.language' | translate"
+             [attr.data-active]="i18n.language()">
+          <button type="button" [class.active]="i18n.language() === 'es'" (click)="i18n.use('es')">ES</button>
+          <button type="button" [class.active]="i18n.language() === 'en'" (click)="i18n.use('en')">EN</button>
+        </div>
+
+        <button mat-icon-button type="button" class="theme-button"
+                [class.theme-button--dark]="theme.theme() === 'dark'"
+                [matTooltip]="'shell.theme' | translate"
+                (click)="toggleTheme()"
+                [attr.aria-label]="'shell.theme' | translate">
+          <mat-icon>{{ theme.theme() === 'dark' ? 'light_mode' : 'dark_mode' }}</mat-icon>
+        </button>
+      </div>
+    </header>
+
+    <section class="workspace__content">
+      <router-outlet />
+    </section>
+  </main>
+</div>
